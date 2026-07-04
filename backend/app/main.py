@@ -43,17 +43,17 @@ def seed_users():
         db.close()
 
 
-def reset_schema():
-    with engine.connect() as conn:
-        conn.execute(text("DROP SCHEMA public CASCADE"))
-        conn.execute(text("CREATE SCHEMA public"))
-        conn.commit()
-    Base.metadata.create_all(bind=engine)
+# def reset_schema():
+#     with engine.connect() as conn:
+#         conn.execute(text("DROP SCHEMA public CASCADE"))
+#         conn.execute(text("CREATE SCHEMA public"))
+#         conn.commit()
+#     Base.metadata.create_all(bind=engine)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    reset_schema()
+    Base.metadata.create_all(bind=engine)
     seed_users()
     yield
 
