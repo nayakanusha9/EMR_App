@@ -1,56 +1,54 @@
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, LogOut } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
+import { useState } from 'react';
+import { Outlet, useLocation } from 'react-router-dom';
+import AppBar from './AppBar';
+import BottomNav from './BottomNav';
+import NavDrawer from './NavDrawer';
 
-const navItems = [
-  { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/patients', icon: Users, label: 'Patients' },
-];
+const PAGE_TITLES = {
+  '/': 'Dashboard',
+  '/schedule': "Today's Schedule",
+  '/patients': 'Patients',
+  '/calendar': 'Calendar',
+  '/clinical-search': 'Clinical Search',
+  '/profile': 'Profile',
+  '/about': 'About',
+};
 
 export default function Layout() {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const location = useLocation();
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
+  const isDetailPage = /^\/patients\/\d+/.test(location.pathname);
+  const showBottomNav = !isDetailPage;
+  const showAppBarSearch = !isDetailPage && location.pathname !== '/';
+
+  const getTitle = () => {
+    if (isDetailPage) return 'Patient Details';
+    const base = location.pathname.split('/').slice(0, 2).join('/') || location.pathname;
+    if (PAGE_TITLES[location.pathname]) return PAGE_TITLES[location.pathname];
+    if (location.pathname.startsWith('/patients/') && location.pathname.includes('/visits/')) {
+      return 'Visit Details';
+    }
+    return PAGE_TITLES[base] || 'EMR System';
   };
 
   return (
-    <div className="app-layout">
-      <aside className="sidebar">
-        <div className="sidebar-brand">
-          <h1>EMR System</h1>
-          <p>Electronic Medical Records</p>
-        </div>
-        <nav>
-          {navItems.map(({ to, icon: Icon, label }) => (
-            <NavLink
-              key={to}
-              to={to}
-              end={to === '/'}
-              className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
-            >
-              <Icon size={18} />
-              {label}
-            </NavLink>
-          ))}
-        </nav>
-        <div className="sidebar-footer">
-          <div className="user-name">{user?.full_name}</div>
-          <div className="user-role">{user?.role}</div>
-          <button
-            className="btn btn-secondary btn-sm"
-            style={{ marginTop: '0.75rem', width: '100%', color: 'white', borderColor: 'rgba(255,255,255,0.3)', background: 'rgba(255,255,255,0.1)' }}
-            onClick={handleLogout}
-          >
-            <LogOut size={14} /> Logout
-          </button>
-        </div>
-      </aside>
-      <main className="main-content">
-        <Outlet />
+    <div className="app-shell">
+      {!isDetailPage && (
+        <AppBar
+          title={getTitle()}
+          onMenuClick={() => setDrawerOpen(true)}
+          showSearch={showAppBarSearch}
+        />
+      )}
+
+      <NavDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
+
+      <main className={`shell-content${showBottomNav ? ' with-bottom-nav' : ''}`}>
+        <Outlet context={{ openDrawer: () => setDrawerOpen(true) }} />
       </main>
+
+      {showBottomNav && <BottomNav />}
     </div>
   );
 }

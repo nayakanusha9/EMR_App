@@ -1,84 +1,53 @@
-import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Users, CalendarClock } from 'lucide-react';
-import { dashboardAPI } from '../services/api';
+import { useNavigate } from 'react-router-dom';
+import { CalendarClock, CalendarDays } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 export default function Dashboard() {
-  const [stats, setStats] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const isDoctor = user?.role === 'doctor';
 
-  useEffect(() => {
-    dashboardAPI.stats()
-      .then((res) => setStats(res.data))
-      .finally(() => setLoading(false));
-  }, []);
-
-  if (loading) return <p>Loading dashboard...</p>;
+  if (!isDoctor) {
+    navigate('/patients', { replace: true });
+    return null;
+  }
 
   const cards = [
-    { label: 'Total Patients', value: stats.total_patients, icon: Users },
-    { label: 'Registered Today', value: stats.registered_today, icon: Users },
-    { label: 'Pending Follow Up 1', value: stats.pending_follow_up_1, icon: CalendarClock },
-    { label: 'Pending Follow Up 2', value: stats.pending_follow_up_2, icon: CalendarClock },
+    {
+      title: 'Appointments Today',
+      icon: CalendarClock,
+      description: 'View and manage today\'s appointments',
+      onClick: () => navigate('/schedule?form=appointment'),
+    },
+    {
+      title: "Today's Schedule",
+      icon: CalendarDays,
+      description: 'View and manage today\'s schedule',
+      onClick: () => navigate('/schedule?form=schedule'),
+    },
   ];
 
   return (
-    <div>
+    <div className="page-container">
       <div className="page-header">
         <div>
           <h2>Dashboard</h2>
-          <p>Overview of your EMR system</p>
+          <p>Quick access to your daily workflow</p>
         </div>
       </div>
 
-      <div className="stats-grid">
-        {cards.map(({ label, value, icon: Icon }) => (
-          <div key={label} className="stat-card">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span className="stat-label">{label}</span>
-              <Icon size={20} color="var(--primary)" />
+      <div className="dashboard-cards">
+        {cards.map(({ title, icon: Icon, description, onClick }) => (
+          <button key={title} type="button" className="dashboard-card" onClick={onClick}>
+            <div className="dashboard-card-icon">
+              <Icon size={32} />
             </div>
-            <div className="stat-value">{value}</div>
-          </div>
+            <div className="dashboard-card-content">
+              <h3>{title}</h3>
+              <p>{description}</p>
+            </div>
+          </button>
         ))}
-      </div>
-
-      <div className="card">
-        <div className="card-title">Recently Registered Patients</div>
-        {stats.recent_patients.length === 0 ? (
-          <div className="empty-state">No patients registered yet.</div>
-        ) : (
-          <div className="table-wrapper">
-            <table>
-              <thead>
-                <tr>
-                  <th>SL NO</th>
-                  <th>AMAX ID</th>
-                  <th>Name</th>
-                  <th>Date</th>
-                  <th>Phone</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                {stats.recent_patients.map((p) => (
-                  <tr key={p.id}>
-                    <td>{p.sl_no}</td>
-                    <td>{p.amax_id}</td>
-                    <td>{p.name}</td>
-                    <td>{p.date}</td>
-                    <td>{p.phone || '—'}</td>
-                    <td>
-                      <Link to="/patients" className="btn btn-secondary btn-sm">
-                        View
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
       </div>
     </div>
   );
