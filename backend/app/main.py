@@ -85,3 +85,10 @@ app.include_router(dashboard.router, prefix="/api")
 @app.get("/api/health")
 def health_check():
     return {"status": "healthy"}
+
+@app.get("/")
+def root():
+    return {
+        "message": "AMAX EMR Backend Running",
+        "status": "OK"
+    }
