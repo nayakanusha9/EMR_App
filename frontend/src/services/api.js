@@ -31,7 +31,9 @@ export const authAPI = {
     const form = new URLSearchParams();
     form.append('username', email);
     form.append('password', password);
-    return api.post('/auth/login', form);
+    return api.post('/auth/login', form, {
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    });
   },
   register: (data) => api.post('/auth/register', data),
   me: () => api.get('/auth/me'),
