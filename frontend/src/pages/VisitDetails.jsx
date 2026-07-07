@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
-import { patientsAPI } from '../services/api';
+import { patientsAPI, visitsAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { displayValue, buildVisitsFromPatient } from '../utils/patientForm';
+import { displayValue } from '../utils/patientForm';
 
 export default function VisitDetails() {
   const { id, visitId } = useParams();
@@ -16,18 +16,12 @@ export default function VisitDetails() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    patientsAPI.get(id)
-      .then((res) => {
-        setPatient(res.data);
-        const visits = buildVisitsFromPatient(res.data);
-        const found = visits.find((v) => v.id === visitId);
-        if (found) {
-          setVisit(found);
-        } else {
-          navigate(`/patients/${id}`);
-        }
+    Promise.all([patientsAPI.get(id), visitsAPI.get(id, visitId)])
+      .then(([patientRes, visitRes]) => {
+        setPatient(patientRes.data);
+        setVisit(visitRes.data);
       })
-      .catch(() => navigate('/patients'))
+      .catch(() => navigate(`/patients/${id}`, { replace: true }))
       .finally(() => setLoading(false));
   }, [id, visitId, navigate]);
 
@@ -37,23 +31,25 @@ export default function VisitDetails() {
   const fields = [
     { label: 'Patient Name', value: patient.name },
     { label: 'AMAX ID', value: patient.amax_id },
-    { label: 'Visit Date', value: visit.date },
-    { label: 'Visit Type', value: visit.label },
+    { label: 'Visit', value: `Visit ${visit.visit_number}` },
+    { label: 'Visit Date', value: visit.visit_date },
     ...(isDoctor ? [
       { label: 'Diagnosis', value: visit.diagnosis },
-      { label: 'Treatment', value: visit.treatment },
-      { label: 'Status', value: visit.status },
-      { label: 'Remark', value: visit.remark },
-    ] : []),
+      { label: 'Prescription', value: visit.prescription },
+      { label: 'Notes', value: visit.notes },
+      { label: 'Follow-up Remarks', value: visit.follow_up_remarks },
+    ] : [
+      { label: 'Notes', value: visit.notes },
+    ]),
   ];
 
   return (
     <div className="detail-page">
       <header className="detail-app-bar">
-        <button type="button" className="app-bar-icon-btn" onClick={() => navigate(`/patients/${id}`)}>
+        <button type="button" className="app-bar-icon-btn" onClick={() => navigate(`/patients/${id}`, { replace: false })}>
           <ArrowLeft size={22} />
         </button>
-        <h1>Visit Details</h1>
+        <h1>Visit {visit.visit_number}</h1>
         <div style={{ width: 40 }} />
       </header>
 

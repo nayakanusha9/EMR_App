@@ -1,16 +1,20 @@
+import { DEFAULT_COUNTRY_CODE } from './constants';
+
 export const RECEPTIONIST_FORM_FIELDS = [
   { name: 'amax_id', label: 'AMAX ID', type: 'text', required: true },
   { name: 'date', label: 'Date', type: 'date', required: true },
   { name: 'name', label: 'Name', type: 'text', required: true },
   { name: 'age', label: 'Age', type: 'number', required: true },
-  { name: 'phone', label: 'Phone', type: 'text', required: false },
+  { name: 'phone_country_code', label: 'Country Code', type: 'country', required: false },
+  { name: 'phone', label: 'Phone', type: 'tel', required: false },
+  { name: 'email', label: 'Email', type: 'email', required: false, optional: true },
   { name: 'address', label: 'Address', type: 'textarea', required: false },
   { name: 'follow_up_1', label: 'Follow Up 1', type: 'text', required: false },
   { name: 'follow_up_2', label: 'Follow Up 2', type: 'text', required: false },
 ];
 
 export const DOCTOR_FORM_FIELDS = [
-  ...RECEPTIONIST_FORM_FIELDS.slice(0, 6),
+  ...RECEPTIONIST_FORM_FIELDS.slice(0, 8),
   { name: 'follow_up_1', label: 'FU 1', type: 'text', required: false },
   { name: 'diagnosis', label: 'Diagnosis', type: 'textarea', required: false },
   { name: 'laterality', label: 'Laterality', type: 'text', required: false },
@@ -23,10 +27,37 @@ export const DOCTOR_FORM_FIELDS = [
   { name: 'referral', label: 'Referral', type: 'text', required: false },
 ];
 
-export function emptyForm(isDoctor) {
-  const fields = isDoctor ? DOCTOR_FORM_FIELDS : RECEPTIONIST_FORM_FIELDS;
+export const APPOINTMENT_FORM_FIELDS = [
+  { name: 'amax_id', label: 'AMAX ID', type: 'text', required: true },
+  { name: 'date', label: 'Date', type: 'date', required: true },
+  { name: 'appointment_time', label: 'Appointment Time', type: 'time', required: false },
+  { name: 'name', label: 'Name', type: 'text', required: true },
+  { name: 'age', label: 'Age', type: 'number', required: true },
+  { name: 'phone_country_code', label: 'Country Code', type: 'country', required: false },
+  { name: 'phone', label: 'Phone', type: 'tel', required: false },
+  { name: 'email', label: 'Email', type: 'email', required: false, optional: true },
+  { name: 'address', label: 'Address', type: 'textarea', required: false },
+  { name: 'patient_type', label: 'Patient Type', type: 'patient_type', required: false },
+  { name: 'appointment_status', label: 'Status', type: 'appointment_status', required: false },
+];
+
+export const DOCTOR_APPOINTMENT_FORM_FIELDS = [
+  ...APPOINTMENT_FORM_FIELDS,
+  { name: 'diagnosis', label: 'Diagnosis', type: 'textarea', required: false },
+  { name: 'laterality', label: 'Laterality', type: 'text', required: false },
+  { name: 'treatment', label: 'Treatment', type: 'textarea', required: false },
+];
+
+export const VISIT_FORM_FIELDS = [
+  { name: 'diagnosis', label: 'Diagnosis', type: 'textarea', required: false },
+  { name: 'prescription', label: 'Prescription', type: 'textarea', required: false },
+  { name: 'notes', label: 'Notes', type: 'textarea', required: false },
+  { name: 'follow_up_remarks', label: 'Follow-up Remarks', type: 'textarea', required: false },
+];
+
+export function emptyForm(fields) {
   return fields.reduce((acc, { name }) => {
-    acc[name] = '';
+    acc[name] = name === 'phone_country_code' ? DEFAULT_COUNTRY_CODE : '';
     return acc;
   }, {});
 }
@@ -39,7 +70,12 @@ export function patientToForm(patient) {
     name: patient.name ?? '',
     age: patient.age ?? '',
     phone: patient.phone ?? '',
+    phone_country_code: patient.phone_country_code ?? DEFAULT_COUNTRY_CODE,
+    email: patient.email ?? '',
     address: patient.address ?? '',
+    appointment_time: patient.appointment_time ?? '',
+    patient_type: patient.patient_type ?? '',
+    appointment_status: patient.appointment_status ?? '',
     follow_up_1: patient.follow_up_1 ?? '',
     follow_up_2: patient.follow_up_2 ?? '',
     diagnosis: patient.diagnosis ?? '',
@@ -53,8 +89,7 @@ export function patientToForm(patient) {
   };
 }
 
-export function buildPayload(form, isDoctor) {
-  const fields = isDoctor ? DOCTOR_FORM_FIELDS : RECEPTIONIST_FORM_FIELDS;
+export function buildPayload(form, fields) {
   const payload = {};
   for (const { name, type } of fields) {
     const value = form[name];
@@ -84,54 +119,45 @@ export function matchesDate(value, isoDate) {
   return String(value).slice(0, 10) === isoDate || String(value).includes(isoDate);
 }
 
-export function extractTime(value) {
+export function extractTime(patient) {
+  if (patient?.appointment_time) return patient.appointment_time;
+  const value = patient?.follow_up_1;
   if (!value) return '—';
   const match = String(value).match(/(\d{1,2}:\d{2}(?::\d{2})?\s*(?:AM|PM|am|pm)?)/);
   return match ? match[1] : '—';
 }
 
-export function buildVisitsFromPatient(patient) {
-  if (!patient) return [];
-  const visits = [
-    {
-      id: 'primary',
-      date: patient.date,
-      diagnosis: patient.diagnosis,
-      treatment: patient.treatment,
-      status: patient.status,
-      label: 'Registration Visit',
-    },
-  ];
-  if (patient.follow_up_1) {
-    visits.push({
-      id: 'fu1',
-      date: patient.follow_up_1,
-      diagnosis: patient.diagnosis,
-      treatment: patient.treatment,
-      status: patient.status,
-      remark: patient.remark_1,
-      label: 'Follow Up 1',
-    });
-  }
-  if (patient.follow_up_2) {
-    visits.push({
-      id: 'fu2',
-      date: patient.follow_up_2,
-      diagnosis: patient.diagnosis,
-      treatment: patient.treatment,
-      status: patient.status,
-      remark: patient.remark_2,
-      label: 'Follow Up 2',
-    });
-  }
-  return visits;
+export function fullPhone(patient) {
+  const code = (patient?.phone_country_code || DEFAULT_COUNTRY_CODE).replace(/\D/g, '');
+  const num = (patient?.phone || '').replace(/\D/g, '');
+  if (!num) return '';
+  return `${code}${num}`;
+}
+
+export function whatsappUrl(patient, message = '') {
+  const phone = fullPhone(patient);
+  if (!phone) return null;
+  const text = message ? `?text=${encodeURIComponent(message)}` : '';
+  return `https://wa.me/${phone}${text}`;
+}
+
+export function smsUrl(patient, message = '') {
+  const phone = fullPhone(patient);
+  if (!phone) return null;
+  const body = message ? `?body=${encodeURIComponent(message)}` : '';
+  return `sms:+${phone}${body}`;
+}
+
+export function mailtoUrl(patient) {
+  if (!patient?.email) return null;
+  return `mailto:${patient.email}`;
 }
 
 export function filterPatientsByKeyword(patients, keyword) {
   if (!keyword?.trim()) return patients;
   const term = keyword.trim().toLowerCase();
   return patients.filter((p) =>
-    [p.name, p.amax_id, p.phone, p.address, p.diagnosis, p.treatment, p.status, p.referral]
+    [p.name, p.amax_id, p.phone, p.address, p.diagnosis, p.treatment, p.status, p.referral, p.email]
       .some((field) => field && String(field).toLowerCase().includes(term))
   );
 }
@@ -143,4 +169,9 @@ export function filterPatientsByDateRange(patients, startDate, endDate) {
     if (endDate && d > endDate) return false;
     return true;
   });
+}
+
+export function appointmentStatusClass(status) {
+  if (!status) return '';
+  return `badge badge-${String(status).toLowerCase().replace(/\s+/g, '-')}`;
 }

@@ -10,10 +10,11 @@ from app.auth import (
     get_current_user,
     get_password_hash,
     get_user_by_email,
+    verify_password,
 )
 from app.database import get_db
 from app.models import User
-from app.schemas import ALLOWED_ROLES, Token, UserCreate, UserResponse
+from app.schemas import ALLOWED_ROLES, PasswordUpdate, ProfileUpdate, Token, UserCreate, UserResponse
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -60,3 +61,33 @@ def login(
 @router.get("/me", response_model=UserResponse)
 def get_me(current_user: Annotated[User, Depends(get_current_user)]):
     return current_user
+
+
+@router.put("/profile", response_model=UserResponse)
+def update_profile(
+    data: ProfileUpdate,
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+):
+    updates = data.model_dump(exclude_unset=True)
+    if "email" in updates and updates["email"] != current_user.email:
+        existing = get_user_by_email(db, updates["email"])
+        if existing and existing.id != current_user.id:
+            raise HTTPException(status_code=400, detail="Email already registered")
+    for key, value in updates.items():
+        setattr(current_user, key, value)
+    db.commit()
+    db.refresh(current_user)
+    return current_user
+
+
+@router.put("/password", status_code=status.HTTP_204_NO_CONTENT)
+def update_password(
+    data: PasswordUpdate,
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+):
+    if not verify_password(data.current_password, current_user.hashed_password):
+        raise HTTPException(status_code=400, detail="Current password is incorrect")
+    current_user.hashed_password = get_password_hash(data.new_password)
+    db.commit()

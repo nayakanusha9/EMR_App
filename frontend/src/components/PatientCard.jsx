@@ -29,10 +29,10 @@ export default function PatientCard({ patient, onClick, compact = false }) {
           {patient.status && <span className={statusClass}>{patient.status}</span>}
         </div>
         <div className="patient-card-details">
-          <div><span className="label">AMAX ID</span> {displayValue(patient.amax_id)}</div>
+          <div><span className="label">Patient ID</span> {displayValue(patient.amax_id)}</div>
           <div><span className="label">Age</span> {displayValue(patient.age)}</div>
-          <div><span className="label">Phone</span> {displayValue(patient.phone)}</div>
-          <div><span className="label">Last Visit</span> {displayValue(patient.date)}</div>
+          <div><span className="label">Diagnosis</span> {displayValue(patient.diagnosis)}</div>
+          <div><span className="label">Date</span> {displayValue(patient.date)}</div>
         </div>
       </div>
       <ChevronRight size={18} className="patient-card-arrow" />

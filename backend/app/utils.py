@@ -1,14 +1,23 @@
 from datetime import date
 
-from sqlalchemy import or_, func, asc, desc
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from app.models import Patient
+from app.models import Patient, Visit
 
 
 def generate_sl_no(db: Session) -> int:
     max_sl = db.query(func.max(Patient.sl_no)).scalar()
     return (max_sl or 0) + 1
+
+
+def generate_visit_number(db: Session, patient_id: int) -> int:
+    max_num = (
+        db.query(func.max(Visit.visit_number))
+        .filter(Visit.patient_id == patient_id)
+        .scalar()
+    )
+    return (max_num or 0) + 1
 
 
 def search_patients(
@@ -19,6 +28,8 @@ def search_patients(
     sort_by: str = "sl_no",
     sort_order: str = "asc",
 ) -> tuple[list[Patient], int]:
+    from sqlalchemy import or_, asc, desc
+
     q = db.query(Patient)
 
     if query:
@@ -29,6 +40,8 @@ def search_patients(
                 Patient.amax_id.ilike(term),
                 Patient.phone.ilike(term),
                 Patient.address.ilike(term),
+                Patient.email.ilike(term),
+                Patient.diagnosis.ilike(term),
             )
         )
 

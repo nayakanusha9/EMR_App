@@ -9,6 +9,23 @@ RECEPTIONIST_ROLE = "receptionist"
 DOCTOR_ROLE = "doctor"
 ALLOWED_ROLES = {RECEPTIONIST_ROLE, DOCTOR_ROLE}
 
+PATIENT_TYPES = [
+    "New Consultation",
+    "Follow Up",
+    "Procedure",
+    "Emergency",
+    "WhatsApp",
+]
+
+APPOINTMENT_STATUSES = [
+    "Scheduled",
+    "Confirmed",
+    "Checked-In",
+    "Completed",
+    "No-Show",
+    "Cancelled",
+]
+
 
 class UserCreate(BaseModel):
     email: EmailStr
@@ -22,9 +39,23 @@ class UserResponse(BaseModel):
     email: str
     full_name: str
     role: str
+    phone: str | None = None
+    profile_picture: str | None = None
     is_active: bool
 
     model_config = {"from_attributes": True}
+
+
+class ProfileUpdate(BaseModel):
+    full_name: str | None = None
+    email: EmailStr | None = None
+    phone: str | None = None
+    profile_picture: str | None = None
+
+
+class PasswordUpdate(BaseModel):
+    current_password: str
+    new_password: str = Field(min_length=6)
 
 
 class Token(BaseModel):
@@ -33,13 +64,21 @@ class Token(BaseModel):
     user: UserResponse
 
 
-class ReceptionistPatientCreate(BaseModel):
+class PatientBaseFields(BaseModel):
     amax_id: str
     date: DateType
     name: str
     age: int = Field(ge=0)
     phone: str | None = None
+    phone_country_code: str | None = "+91"
+    email: str | None = None
     address: str | None = None
+    appointment_time: str | None = None
+    patient_type: str | None = None
+    appointment_status: str | None = None
+
+
+class ReceptionistPatientCreate(PatientBaseFields):
     follow_up_1: str | None = None
     follow_up_2: str | None = None
 
@@ -50,18 +89,17 @@ class ReceptionistPatientUpdate(BaseModel):
     name: str | None = None
     age: int | None = Field(default=None, ge=0)
     phone: str | None = None
+    phone_country_code: str | None = None
+    email: str | None = None
     address: str | None = None
+    appointment_time: str | None = None
+    patient_type: str | None = None
+    appointment_status: str | None = None
     follow_up_1: str | None = None
     follow_up_2: str | None = None
 
 
-class DoctorPatientCreate(BaseModel):
-    amax_id: str
-    date: DateType
-    name: str
-    age: int = Field(ge=0)
-    phone: str | None = None
-    address: str | None = None
+class DoctorPatientCreate(PatientBaseFields):
     follow_up_1: str | None = None
     follow_up_2: str | None = None
     diagnosis: str | None = None
@@ -80,7 +118,12 @@ class DoctorPatientUpdate(BaseModel):
     name: str | None = None
     age: int | None = Field(default=None, ge=0)
     phone: str | None = None
+    phone_country_code: str | None = None
+    email: str | None = None
     address: str | None = None
+    appointment_time: str | None = None
+    patient_type: str | None = None
+    appointment_status: str | None = None
     follow_up_1: str | None = None
     follow_up_2: str | None = None
     diagnosis: str | None = None
@@ -101,7 +144,12 @@ class ReceptionistPatientResponse(BaseModel):
     name: str
     age: int
     phone: str | None
+    phone_country_code: str | None
+    email: str | None
     address: str | None
+    appointment_time: str | None
+    patient_type: str | None
+    appointment_status: str | None
     follow_up_1: str | None
     follow_up_2: str | None
     created_at: datetime
@@ -128,6 +176,40 @@ class ReceptionistSearchResult(BaseModel):
 class DoctorSearchResult(BaseModel):
     patients: list[DoctorPatientResponse]
     total: int
+
+
+class BulkDeleteRequest(BaseModel):
+    ids: list[int] = Field(min_length=1)
+
+
+class VisitCreate(BaseModel):
+    diagnosis: str | None = None
+    prescription: str | None = None
+    notes: str | None = None
+    follow_up_remarks: str | None = None
+    visit_date: DateType | None = None
+
+
+class VisitUpdate(BaseModel):
+    diagnosis: str | None = None
+    prescription: str | None = None
+    notes: str | None = None
+    follow_up_remarks: str | None = None
+    visit_date: DateType | None = None
+
+
+class VisitResponse(BaseModel):
+    id: int
+    patient_id: int
+    visit_number: int
+    visit_date: DateType
+    diagnosis: str | None
+    prescription: str | None
+    notes: str | None
+    follow_up_remarks: str | None
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
 
 
 class DashboardStats(BaseModel):

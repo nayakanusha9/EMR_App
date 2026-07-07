@@ -1,16 +1,20 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
-  ArrowLeft, Phone, MessageCircle, Trash2,
+  ArrowLeft, Phone, Trash2, Plus, CalendarPlus,
 } from 'lucide-react';
-import { patientsAPI } from '../services/api';
+import { patientsAPI, visitsAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import Modal from '../components/Modal';
 import PatientForm from '../components/PatientForm';
+import AppointmentForm from '../components/AppointmentForm';
+import VisitForm from '../components/VisitForm';
 import Fab from '../components/Fab';
+import PatientContactIcons from '../components/PatientContactIcons';
 import {
   displayValue,
-  buildVisitsFromPatient,
+  APPOINTMENT_FORM_FIELDS,
+  DOCTOR_APPOINTMENT_FORM_FIELDS,
 } from '../utils/patientForm';
 
 function DetailRow({ label, value, actions }) {
@@ -32,35 +36,32 @@ export default function PatientDetails() {
   const isDoctor = user?.role === 'doctor';
 
   const [patient, setPatient] = useState(null);
+  const [visits, setVisits] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showEdit, setShowEdit] = useState(false);
+  const [showNewVisit, setShowNewVisit] = useState(false);
+  const [showBookAppointment, setShowBookAppointment] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  const loadPatient = () => {
+  const loadData = () => {
     setLoading(true);
-    patientsAPI.get(id)
-      .then((res) => setPatient(res.data))
-      .catch(() => navigate('/patients'))
+    Promise.all([patientsAPI.get(id), visitsAPI.list(id)])
+      .then(([patientRes, visitsRes]) => {
+        setPatient(patientRes.data);
+        setVisits(visitsRes.data);
+      })
+      .catch(() => navigate('/patients', { replace: true }))
       .finally(() => setLoading(false));
   };
 
-  useEffect(() => { loadPatient(); }, [id]);
+  useEffect(() => { loadData(); }, [id]);
 
-  const phone = patient?.phone?.replace(/\D/g, '');
-
-  const phoneActions = phone ? (
+  const phoneActions = patient?.phone ? (
     <>
-      <a href={`tel:${patient.phone}`} className="icon-action" aria-label="Call">
-        <Phone size={16} />
-      </a>
-      <a href={`https://wa.me/${phone}`} target="_blank" rel="noreferrer" className="icon-action" aria-label="WhatsApp">
-        <MessageCircle size={16} />
-      </a>
-      <a href={`sms:${patient.phone}`} className="icon-action" aria-label="SMS">
-        <MessageCircle size={16} />
-      </a>
+      <a href={`tel:${patient.phone}`} className="icon-action" aria-label="Call"><Phone size={16} /></a>
+      <PatientContactIcons patient={patient} size={16} />
     </>
   ) : null;
 
@@ -70,9 +71,37 @@ export default function PatientDetails() {
     try {
       await patientsAPI.update(id, payload);
       setShowEdit(false);
-      loadPatient();
+      loadData();
     } catch (err) {
       setError(err.response?.data?.detail || 'Failed to update patient');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleNewVisit = async (payload) => {
+    setError('');
+    setSubmitting(true);
+    try {
+      await visitsAPI.create(id, payload);
+      setShowNewVisit(false);
+      loadData();
+    } catch (err) {
+      setError(err.response?.data?.detail || 'Failed to create visit');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleBookAppointment = async (payload) => {
+    setError('');
+    setSubmitting(true);
+    try {
+      await patientsAPI.update(id, payload);
+      setShowBookAppointment(false);
+      loadData();
+    } catch (err) {
+      setError(err.response?.data?.detail || 'Failed to book appointment');
     } finally {
       setSubmitting(false);
     }
@@ -82,7 +111,7 @@ export default function PatientDetails() {
     setSubmitting(true);
     try {
       await patientsAPI.delete(id);
-      navigate('/patients');
+      navigate('/patients', { replace: true });
     } catch (err) {
       setError(err.response?.data?.detail || 'Failed to delete patient');
       setShowDelete(false);
@@ -94,7 +123,7 @@ export default function PatientDetails() {
   if (loading) return <div className="page-container"><p>Loading...</p></div>;
   if (!patient) return null;
 
-  const visits = buildVisitsFromPatient(patient);
+  const appointmentFields = isDoctor ? DOCTOR_APPOINTMENT_FORM_FIELDS : APPOINTMENT_FORM_FIELDS;
 
   const infoFields = isDoctor
     ? [
@@ -102,6 +131,7 @@ export default function PatientDetails() {
         { label: 'Patient Name', value: patient.name },
         { label: 'Age', value: patient.age },
         { label: 'Phone', value: patient.phone, actions: phoneActions },
+        { label: 'Email', value: patient.email },
         { label: 'Address', value: patient.address },
         { label: 'Diagnosis', value: patient.diagnosis },
         { label: 'Laterality', value: patient.laterality },
@@ -113,6 +143,9 @@ export default function PatientDetails() {
         { label: 'Follow Up 2', value: patient.follow_up_2 },
         { label: 'Remark 2', value: patient.remark_2 },
         { label: 'Referral', value: patient.referral },
+        { label: 'Patient Type', value: patient.patient_type },
+        { label: 'Appointment Status', value: patient.appointment_status },
+        { label: 'Appointment Time', value: patient.appointment_time },
         { label: 'Date', value: patient.date },
       ]
     : [
@@ -120,16 +153,18 @@ export default function PatientDetails() {
         { label: 'Patient Name', value: patient.name },
         { label: 'Age', value: patient.age },
         { label: 'Phone', value: patient.phone, actions: phoneActions },
+        { label: 'Email', value: patient.email },
         { label: 'Address', value: patient.address },
-        { label: 'Follow Up 1', value: patient.follow_up_1 },
-        { label: 'Follow Up 2', value: patient.follow_up_2 },
+        { label: 'Patient Type', value: patient.patient_type },
+        { label: 'Appointment Status', value: patient.appointment_status },
+        { label: 'Appointment Time', value: patient.appointment_time },
         { label: 'Date', value: patient.date },
       ];
 
   return (
     <div className="detail-page">
       <header className="detail-app-bar">
-        <button type="button" className="app-bar-icon-btn" onClick={() => navigate(-1)}>
+        <button type="button" className="app-bar-icon-btn" onClick={() => navigate('/patients', { replace: false })}>
           <ArrowLeft size={22} />
         </button>
         <h1>{patient.name}</h1>
@@ -141,6 +176,17 @@ export default function PatientDetails() {
       </header>
 
       <div className="page-container">
+        <div className="quick-actions">
+          <button type="button" className="quick-action-btn" onClick={() => { setError(''); setShowNewVisit(true); }}>
+            <Plus size={22} />
+            <span>New Visit</span>
+          </button>
+          <button type="button" className="quick-action-btn" onClick={() => { setError(''); setShowBookAppointment(true); }}>
+            <CalendarPlus size={22} />
+            <span>Book Appointment</span>
+          </button>
+        </div>
+
         <section className="card detail-section">
           <h3 className="card-title">Patient Information</h3>
           <div className="detail-list">
@@ -167,11 +213,11 @@ export default function PatientDetails() {
                   onClick={() => navigate(`/patients/${id}/visits/${visit.id}`)}
                 >
                   <div>
-                    <div className="visit-card-date">{displayValue(visit.date)}</div>
-                    <div className="visit-card-label">{visit.label}</div>
+                    <div className="visit-card-date">Visit {visit.visit_number}</div>
+                    <div className="visit-card-label">{displayValue(visit.visit_date)}</div>
                     {isDoctor && (
                       <div className="visit-card-meta">
-                        {displayValue(visit.diagnosis)} · {displayValue(visit.status)}
+                        {displayValue(visit.diagnosis)} · {displayValue(visit.prescription)}
                       </div>
                     )}
                   </div>
@@ -186,27 +232,27 @@ export default function PatientDetails() {
 
       {showEdit && (
         <Modal title="Edit Patient" onClose={() => setShowEdit(false)}>
-          <PatientForm
-            isDoctor={isDoctor}
-            patient={patient}
-            onSubmit={handleUpdate}
-            onCancel={() => setShowEdit(false)}
-            submitting={submitting}
-            error={error}
-            submitLabel="Update Patient"
-          />
+          <PatientForm isDoctor={isDoctor} patient={patient} onSubmit={handleUpdate} onCancel={() => setShowEdit(false)} submitting={submitting} error={error} submitLabel="Update Patient" />
+        </Modal>
+      )}
+
+      {showNewVisit && (
+        <Modal title="New Visit" onClose={() => setShowNewVisit(false)}>
+          <VisitForm patient={patient} onSubmit={handleNewVisit} onCancel={() => setShowNewVisit(false)} submitting={submitting} error={error} />
+        </Modal>
+      )}
+
+      {showBookAppointment && (
+        <Modal title="Book Appointment" onClose={() => setShowBookAppointment(false)}>
+          <AppointmentForm isDoctor={isDoctor} patient={patient} formFields={appointmentFields} onSubmit={handleBookAppointment} onCancel={() => setShowBookAppointment(false)} submitting={submitting} error={error} submitLabel="Book Appointment" />
         </Modal>
       )}
 
       {showDelete && (
         <Modal title="Delete Patient" onClose={() => setShowDelete(false)}>
-          <p style={{ marginBottom: '1.25rem' }}>
-            Are you sure you want to delete <strong>{patient.name}</strong>?
-          </p>
+          <p style={{ marginBottom: '1.25rem' }}>Are you sure you want to delete <strong>{patient.name}</strong>?</p>
           <div className="form-actions">
-            <button type="button" className="btn btn-primary" onClick={handleDelete} disabled={submitting}>
-              {submitting ? 'Deleting...' : 'Delete'}
-            </button>
+            <button type="button" className="btn btn-primary" onClick={handleDelete} disabled={submitting}>{submitting ? 'Deleting...' : 'Delete'}</button>
             <button type="button" className="btn btn-secondary" onClick={() => setShowDelete(false)}>Cancel</button>
           </div>
         </Modal>

@@ -9,6 +9,7 @@ from app.models import Patient, User
 from app.schemas import (
     DOCTOR_ROLE,
     RECEPTIONIST_ROLE,
+    BulkDeleteRequest,
     DoctorPatientCreate,
     DoctorPatientResponse,
     DoctorPatientUpdate,
@@ -82,6 +83,22 @@ def list_patients(
         patients=[_to_receptionist(p) for p in patients],
         total=total,
     )
+
+
+@router.post("/bulk-delete", status_code=status.HTTP_204_NO_CONTENT)
+def bulk_delete_patients(
+    body: BulkDeleteRequest,
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+):
+    _require_role(current_user, RECEPTIONIST_ROLE, DOCTOR_ROLE)
+
+    patients = db.query(Patient).filter(Patient.id.in_(body.ids)).all()
+    if not patients:
+        raise HTTPException(status_code=404, detail="No patients found")
+    for patient in patients:
+        db.delete(patient)
+    db.commit()
 
 
 @router.get("/{patient_id}")

@@ -8,7 +8,8 @@ from sqlalchemy import text
 from app.database import Base, SessionLocal, engine
 from app.models import User
 from app.auth import get_password_hash, get_user_by_email
-from app.routers import auth, patients, dashboard
+from app.routers import auth, patients, dashboard, visits
+from app.migrate import run_migrations
 
 
 def seed_users():
@@ -54,6 +55,7 @@ def seed_users():
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
+    run_migrations(engine)
     seed_users()
     yield
 
@@ -84,6 +86,7 @@ app.add_middleware(
 
 app.include_router(auth.router, prefix="/api")
 app.include_router(patients.router, prefix="/api")
+app.include_router(visits.router, prefix="/api")
 app.include_router(dashboard.router, prefix="/api")
 
 

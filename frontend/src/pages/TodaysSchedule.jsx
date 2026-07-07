@@ -4,14 +4,19 @@ import { ChevronRight } from 'lucide-react';
 import { patientsAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import Modal from '../components/Modal';
-import PatientForm from '../components/PatientForm';
+import AppointmentForm from '../components/AppointmentForm';
 import Fab from '../components/Fab';
-import { todayISO, matchesDate, extractTime } from '../utils/patientForm';
+import {
+  todayISO,
+  matchesDate,
+  extractTime,
+  appointmentStatusClass,
+  APPOINTMENT_FORM_FIELDS,
+  DOCTOR_APPOINTMENT_FORM_FIELDS,
+} from '../utils/patientForm';
 
 function ScheduleItem({ patient, onClick }) {
-  const statusClass = patient.status
-    ? `badge badge-${String(patient.status).toLowerCase().replace(/\s+/g, '-')}`
-    : '';
+  const statusClass = appointmentStatusClass(patient.appointment_status || patient.status);
 
   return (
     <button type="button" className="schedule-item" onClick={onClick}>
@@ -19,8 +24,11 @@ function ScheduleItem({ patient, onClick }) {
         <div className="schedule-item-name">{patient.name}</div>
         <div className="schedule-item-meta">
           <span>{patient.amax_id}</span>
-          <span>{extractTime(patient.follow_up_1)}</span>
-          {patient.status && <span className={statusClass}>{patient.status}</span>}
+          <span>{extractTime(patient)}</span>
+          {patient.patient_type && <span>{patient.patient_type}</span>}
+          {(patient.appointment_status || patient.status) && (
+            <span className={statusClass}>{patient.appointment_status || patient.status}</span>
+          )}
         </div>
       </div>
       <ChevronRight size={18} />
@@ -34,6 +42,7 @@ export default function TodaysSchedule() {
   const { user } = useAuth();
   const isDoctor = user?.role === 'doctor';
   const today = todayISO();
+  const appointmentFields = isDoctor ? DOCTOR_APPOINTMENT_FORM_FIELDS : APPOINTMENT_FORM_FIELDS;
 
   const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -62,7 +71,7 @@ export default function TodaysSchedule() {
 
   const appointmentsToday = patients.filter((p) => matchesDate(p.date, today));
   const scheduleToday = patients.filter(
-    (p) => matchesDate(p.follow_up_1, today) || matchesDate(p.follow_up_2, today)
+    (p) => matchesDate(p.date, today) && ['Scheduled', 'Confirmed', 'Checked-In'].includes(p.appointment_status || '')
   );
 
   const openForm = (mode) => {
@@ -107,11 +116,7 @@ export default function TodaysSchedule() {
         ) : (
           <div className="schedule-list">
             {appointmentsToday.map((p) => (
-              <ScheduleItem
-                key={p.id}
-                patient={p}
-                onClick={() => navigate(`/patients/${p.id}`)}
-              />
+              <ScheduleItem key={p.id} patient={p} onClick={() => navigate(`/patients/${p.id}`)} />
             ))}
           </div>
         )}
@@ -130,11 +135,7 @@ export default function TodaysSchedule() {
         ) : (
           <div className="schedule-list">
             {scheduleToday.map((p) => (
-              <ScheduleItem
-                key={`sched-${p.id}`}
-                patient={p}
-                onClick={() => navigate(`/patients/${p.id}`)}
-              />
+              <ScheduleItem key={`sched-${p.id}`} patient={p} onClick={() => navigate(`/patients/${p.id}`)} />
             ))}
           </div>
         )}
@@ -143,8 +144,9 @@ export default function TodaysSchedule() {
 
       {showForm && (
         <Modal title={formTitle} onClose={() => setShowForm(false)}>
-          <PatientForm
+          <AppointmentForm
             isDoctor={isDoctor}
+            formFields={appointmentFields}
             onSubmit={handleSubmit}
             onCancel={() => setShowForm(false)}
             submitting={submitting}

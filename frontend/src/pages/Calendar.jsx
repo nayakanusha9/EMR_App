@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { patientsAPI } from '../services/api';
-import { extractTime, displayValue } from '../utils/patientForm';
+import Modal from '../components/Modal';
+import { extractTime, displayValue, appointmentStatusClass, whatsappUrl } from '../utils/patientForm';
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTHS = [
@@ -21,6 +22,8 @@ export default function CalendarPage() {
   const [selectedDate, setSelectedDate] = useState(today.toISOString().slice(0, 10));
   const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showBroadcast, setShowBroadcast] = useState(false);
+  const [broadcastMessage, setBroadcastMessage] = useState('');
 
   useEffect(() => {
     patientsAPI.list({ limit: 100, sort_by: 'date', sort_order: 'desc' })
@@ -34,16 +37,6 @@ export default function CalendarPage() {
       const d = String(p.date).slice(0, 10);
       if (!map[d]) map[d] = [];
       map[d].push(p);
-      if (p.follow_up_1) {
-        const fu1 = String(p.follow_up_1).slice(0, 10);
-        if (!map[fu1]) map[fu1] = [];
-        if (!map[fu1].find((x) => x.id === p.id)) map[fu1].push(p);
-      }
-      if (p.follow_up_2) {
-        const fu2 = String(p.follow_up_2).slice(0, 10);
-        if (!map[fu2]) map[fu2] = [];
-        if (!map[fu2].find((x) => x.id === p.id)) map[fu2].push(p);
-      }
     }
     return map;
   }, [patients]);
@@ -59,8 +52,16 @@ export default function CalendarPage() {
 
   const selectedAppointments = patientsByDate[selectedDate] || [];
 
-  const prevMonth = () => setViewDate(new Date(year, month - 1, 1));
-  const nextMonth = () => setViewDate(new Date(year, month + 1, 1));
+  const handleBroadcast = () => {
+    const withPhone = selectedAppointments.filter((p) => whatsappUrl(p));
+    if (withPhone.length === 0) return;
+    withPhone.forEach((p, index) => {
+      const url = whatsappUrl(p, broadcastMessage);
+      setTimeout(() => window.open(url, '_blank'), index * 800);
+    });
+    setShowBroadcast(false);
+    setBroadcastMessage('');
+  };
 
   return (
     <div className="page-container">
@@ -73,11 +74,11 @@ export default function CalendarPage() {
 
       <div className="card calendar-card">
         <div className="calendar-nav">
-          <button type="button" className="btn btn-secondary btn-sm" onClick={prevMonth}>
+          <button type="button" className="btn btn-secondary btn-sm" onClick={() => setViewDate(new Date(year, month - 1, 1))}>
             <ChevronLeft size={16} />
           </button>
           <h3>{MONTHS[month]} {year}</h3>
-          <button type="button" className="btn btn-secondary btn-sm" onClick={nextMonth}>
+          <button type="button" className="btn btn-secondary btn-sm" onClick={() => setViewDate(new Date(year, month + 1, 1))}>
             <ChevronRight size={16} />
           </button>
         </div>
@@ -111,7 +112,14 @@ export default function CalendarPage() {
           <h3 className="card-title" style={{ marginBottom: 0 }}>
             Appointments — {selectedDate}
           </h3>
-          <span className="section-count">{selectedAppointments.length}</span>
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+            <span className="section-count">{selectedAppointments.length}</span>
+            {selectedAppointments.length > 1 && (
+              <button type="button" className="btn btn-primary btn-sm" onClick={() => setShowBroadcast(true)}>
+                Broadcast WhatsApp
+              </button>
+            )}
+          </div>
         </div>
         {loading ? (
           <p>Loading...</p>
@@ -130,8 +138,11 @@ export default function CalendarPage() {
                   <div className="schedule-item-name">{p.name}</div>
                   <div className="schedule-item-meta">
                     <span>{p.amax_id}</span>
-                    <span>{extractTime(p.follow_up_1)}</span>
-                    <span>{displayValue(p.status)}</span>
+                    <span>{extractTime(p)}</span>
+                    {p.patient_type && <span>{p.patient_type}</span>}
+                    <span className={appointmentStatusClass(p.appointment_status)}>
+                      {displayValue(p.appointment_status)}
+                    </span>
                   </div>
                 </div>
               </button>
@@ -139,6 +150,27 @@ export default function CalendarPage() {
           </div>
         )}
       </section>
+
+      {showBroadcast && (
+        <Modal title="Broadcast WhatsApp" onClose={() => setShowBroadcast(false)}>
+          <p style={{ marginBottom: '1rem', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+            Send the same message to {selectedAppointments.filter((p) => whatsappUrl(p)).length} patient(s) with phone numbers.
+          </p>
+          <div className="form-group">
+            <label>Message</label>
+            <textarea
+              value={broadcastMessage}
+              onChange={(e) => setBroadcastMessage(e.target.value)}
+              placeholder="Enter your message..."
+              rows={4}
+            />
+          </div>
+          <div className="form-actions">
+            <button type="button" className="btn btn-primary" onClick={handleBroadcast}>Send via WhatsApp</button>
+            <button type="button" className="btn btn-secondary" onClick={() => setShowBroadcast(false)}>Cancel</button>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }
