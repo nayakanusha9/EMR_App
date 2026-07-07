@@ -71,6 +71,11 @@ app.add_middleware(
         "http://localhost:5173",
         "http://localhost:3000",
         "https://emr-app-frontend.vercel.app",
+        # Capacitor Android/iOS WebView origins (default androidScheme: https)
+        "https://localhost",
+        "http://localhost",
+        "capacitor://localhost",
+        "ionic://localhost",
     ],
     allow_credentials=True,
     allow_methods=["*"],
