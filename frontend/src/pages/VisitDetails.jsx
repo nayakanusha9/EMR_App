@@ -33,6 +33,7 @@ export default function VisitDetails() {
     { label: 'AMAX ID', value: patient.amax_id },
     { label: 'Visit', value: `Visit ${visit.visit_number}` },
     { label: 'Visit Date', value: visit.visit_date },
+    { label: 'Visit Time', value: visit.visit_time },
     ...(isDoctor ? [
       { label: 'Diagnosis', value: visit.diagnosis },
       { label: 'Prescription', value: visit.prescription },

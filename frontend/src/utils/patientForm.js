@@ -49,11 +49,29 @@ export const DOCTOR_APPOINTMENT_FORM_FIELDS = [
 ];
 
 export const VISIT_FORM_FIELDS = [
+  { name: 'visit_date', label: 'Visit Date', type: 'date', required: false, optional: true },
+  { name: 'visit_time', label: 'Visit Time', type: 'time', required: false, optional: true },
   { name: 'diagnosis', label: 'Diagnosis', type: 'textarea', required: false },
   { name: 'prescription', label: 'Prescription', type: 'textarea', required: false },
   { name: 'notes', label: 'Notes', type: 'textarea', required: false },
   { name: 'follow_up_remarks', label: 'Follow-up Remarks', type: 'textarea', required: false },
 ];
+
+export function currentTime() {
+  const now = new Date();
+  return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+}
+
+export function emptyVisitForm() {
+  return {
+    visit_date: todayISO(),
+    visit_time: currentTime(),
+    diagnosis: '',
+    prescription: '',
+    notes: '',
+    follow_up_remarks: '',
+  };
+}
 
 export function emptyForm(fields) {
   return fields.reduce((acc, { name }) => {

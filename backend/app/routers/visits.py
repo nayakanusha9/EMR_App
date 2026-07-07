@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -57,11 +57,13 @@ def create_visit(
     patient = _get_patient(db, patient_id)
     visit_number = generate_visit_number(db, patient_id)
     visit_date = data.visit_date or date.today()
+    visit_time = data.visit_time or datetime.now().strftime("%H:%M")
 
     visit = Visit(
         patient_id=patient_id,
         visit_number=visit_number,
         visit_date=visit_date,
+        visit_time=visit_time,
         diagnosis=data.diagnosis,
         prescription=data.prescription,
         notes=data.notes,

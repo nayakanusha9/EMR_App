@@ -63,6 +63,7 @@ class Visit(Base):
     patient_id: Mapped[int] = mapped_column(Integer, ForeignKey("patients.id", ondelete="CASCADE"), index=True)
     visit_number: Mapped[int] = mapped_column(Integer)
     visit_date: Mapped[date] = mapped_column(Date)
+    visit_time: Mapped[str | None] = mapped_column(String(10), nullable=True)
     diagnosis: Mapped[str | None] = mapped_column(Text, nullable=True)
     prescription: Mapped[str | None] = mapped_column(Text, nullable=True)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)

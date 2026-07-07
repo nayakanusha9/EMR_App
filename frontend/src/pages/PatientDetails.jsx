@@ -214,7 +214,8 @@ export default function PatientDetails() {
                 >
                   <div>
                     <div className="visit-card-date">Visit {visit.visit_number}</div>
-                    <div className="visit-card-label">{displayValue(visit.visit_date)}</div>
+                    <div className="visit-card-label">Date: {displayValue(visit.visit_date)}</div>
+                    <div className="visit-card-label">Time: {displayValue(visit.visit_time)}</div>
                     {isDoctor && (
                       <div className="visit-card-meta">
                         {displayValue(visit.diagnosis)} · {displayValue(visit.prescription)}

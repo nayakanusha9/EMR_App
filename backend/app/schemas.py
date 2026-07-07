@@ -188,6 +188,7 @@ class VisitCreate(BaseModel):
     notes: str | None = None
     follow_up_remarks: str | None = None
     visit_date: DateType | None = None
+    visit_time: str | None = None
 
 
 class VisitUpdate(BaseModel):
@@ -196,6 +197,7 @@ class VisitUpdate(BaseModel):
     notes: str | None = None
     follow_up_remarks: str | None = None
     visit_date: DateType | None = None
+    visit_time: str | None = None
 
 
 class VisitResponse(BaseModel):
@@ -203,6 +205,7 @@ class VisitResponse(BaseModel):
     patient_id: int
     visit_number: int
     visit_date: DateType
+    visit_time: str | None
     diagnosis: str | None
     prescription: str | None
     notes: str | None

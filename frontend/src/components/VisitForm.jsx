@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { VISIT_FORM_FIELDS, emptyForm, buildPayload, displayValue } from '../utils/patientForm';
+import { VISIT_FORM_FIELDS, emptyVisitForm, buildPayload, displayValue } from '../utils/patientForm';
 
 export default function VisitForm({ patient, onSubmit, onCancel, submitting, error, submitLabel = 'Save Visit' }) {
-  const [form, setForm] = useState(() => emptyForm(VISIT_FORM_FIELDS));
+  const [form, setForm] = useState(emptyVisitForm);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -29,10 +29,23 @@ export default function VisitForm({ patient, onSubmit, onCancel, submitting, err
       </div>
       <form onSubmit={handleSubmit}>
         <div className="form-grid">
-          {VISIT_FORM_FIELDS.map(({ name, label, type }) => (
-            <div key={name} className="form-group" style={{ gridColumn: '1 / -1' }}>
+          {VISIT_FORM_FIELDS.map(({ name, label, type, optional }) => (
+            <div
+              key={name}
+              className="form-group"
+              style={type === 'textarea' ? { gridColumn: '1 / -1' } : undefined}
+            >
               <label>{label}</label>
-              <textarea name={name} value={form[name] ?? ''} onChange={handleChange} />
+              {type === 'textarea' ? (
+                <textarea name={name} value={form[name] ?? ''} onChange={handleChange} />
+              ) : (
+                <input
+                  type={type}
+                  name={name}
+                  value={form[name] ?? ''}
+                  onChange={handleChange}
+                />
+              )}
             </div>
           ))}
         </div>
