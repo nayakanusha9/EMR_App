@@ -71,6 +71,7 @@ class PatientBaseFields(BaseModel):
     age: int = Field(ge=0)
     phone: str | None = None
     phone_country_code: str | None = "+91"
+    alternative_phone: str | None = None
     email: str | None = None
     address: str | None = None
     appointment_time: str | None = None
@@ -90,6 +91,7 @@ class ReceptionistPatientUpdate(BaseModel):
     age: int | None = Field(default=None, ge=0)
     phone: str | None = None
     phone_country_code: str | None = None
+    alternative_phone: str | None = None
     email: str | None = None
     address: str | None = None
     appointment_time: str | None = None
@@ -119,6 +121,7 @@ class DoctorPatientUpdate(BaseModel):
     age: int | None = Field(default=None, ge=0)
     phone: str | None = None
     phone_country_code: str | None = None
+    alternative_phone: str | None = None
     email: str | None = None
     address: str | None = None
     appointment_time: str | None = None
@@ -145,6 +148,7 @@ class ReceptionistPatientResponse(BaseModel):
     age: int
     phone: str | None
     phone_country_code: str | None
+    alternative_phone: str | None
     email: str | None
     address: str | None
     appointment_time: str | None

@@ -10,7 +10,7 @@ import {
 
 function renderField(field, form, handleChange) {
   const { name, label, type, required, optional } = field;
-  if (type === 'country' || name === 'phone') return null;
+  if (type === 'country' || name === 'phone' || name === 'alternative_phone') return null;
 
   return (
     <div
@@ -82,6 +82,15 @@ export default function PatientForm({
               phone={form.phone}
               onCountryChange={(v) => setForm({ ...form, phone_country_code: v })}
               onPhoneChange={(v) => setForm({ ...form, phone: v })}
+            />
+          </div>
+          <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+            <label>Alternative Phone Number</label>
+            <input
+              type="tel"
+              name="alternative_phone"
+              value={form.alternative_phone ?? ''}
+              onChange={handleChange}
             />
           </div>
         </div>

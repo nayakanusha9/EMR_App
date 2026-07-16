@@ -31,6 +31,7 @@ class Patient(Base):
     age: Mapped[int] = mapped_column(Integer)
     phone: Mapped[str | None] = mapped_column(String(20), nullable=True)
     phone_country_code: Mapped[str | None] = mapped_column(String(10), default="+91", nullable=True)
+    alternative_phone: Mapped[str | None] = mapped_column(String(20), nullable=True)
     email: Mapped[str | None] = mapped_column(String(255), nullable=True)
     address: Mapped[str | None] = mapped_column(Text, nullable=True)
     appointment_time: Mapped[str | None] = mapped_column(String(10), nullable=True)

@@ -11,6 +11,7 @@ MIGRATION_STATEMENTS = [
     "ALTER TABLE patients ADD COLUMN IF NOT EXISTS patient_type VARCHAR(50)",
     "ALTER TABLE patients ADD COLUMN IF NOT EXISTS appointment_status VARCHAR(50)",
     "ALTER TABLE visits ADD COLUMN IF NOT EXISTS visit_time VARCHAR(10)",
+    "ALTER TABLE patients ADD COLUMN IF NOT EXISTS alternative_phone VARCHAR(20)",
 ]
 
 

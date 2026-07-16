@@ -7,6 +7,7 @@ export const RECEPTIONIST_FORM_FIELDS = [
   { name: 'age', label: 'Age', type: 'number', required: true },
   { name: 'phone_country_code', label: 'Country Code', type: 'country', required: false },
   { name: 'phone', label: 'Phone', type: 'tel', required: false },
+  { name: 'alternative_phone', label: 'Alternative Phone Number', type: 'tel', required: false, optional: true },
   { name: 'email', label: 'Email', type: 'email', required: false, optional: true },
   { name: 'address', label: 'Address', type: 'textarea', required: false },
   { name: 'follow_up_1', label: 'Follow Up 1', type: 'text', required: false },
@@ -14,7 +15,7 @@ export const RECEPTIONIST_FORM_FIELDS = [
 ];
 
 export const DOCTOR_FORM_FIELDS = [
-  ...RECEPTIONIST_FORM_FIELDS.slice(0, 8),
+  ...RECEPTIONIST_FORM_FIELDS.slice(0, 9),
   { name: 'follow_up_1', label: 'FU 1', type: 'text', required: false },
   { name: 'diagnosis', label: 'Diagnosis', type: 'textarea', required: false },
   { name: 'laterality', label: 'Laterality', type: 'text', required: false },
@@ -89,6 +90,7 @@ export function patientToForm(patient) {
     age: patient.age ?? '',
     phone: patient.phone ?? '',
     phone_country_code: patient.phone_country_code ?? DEFAULT_COUNTRY_CODE,
+    alternative_phone: patient.alternative_phone ?? '',
     email: patient.email ?? '',
     address: patient.address ?? '',
     appointment_time: patient.appointment_time ?? '',
