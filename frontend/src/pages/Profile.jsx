@@ -82,7 +82,10 @@ export default function Profile() {
         <form onSubmit={handleProfileSubmit}>
           <div className="form-grid">
             <div className="form-group">
-              <label>Name *</label>
+              <label>
+                Name
+                <span className="required-asterisk"> *</span>
+              </label>
               <input
                 value={form.full_name}
                 onChange={(e) => setForm({ ...form, full_name: e.target.value })}
@@ -90,7 +93,10 @@ export default function Profile() {
               />
             </div>
             <div className="form-group">
-              <label>Email *</label>
+              <label>
+                Email
+                <span className="required-asterisk"> *</span>
+              </label>
               <input
                 type="email"
                 value={form.email}
@@ -129,7 +135,10 @@ export default function Profile() {
         <form onSubmit={handlePasswordSubmit}>
           <div className="form-grid">
             <div className="form-group">
-              <label>Current Password *</label>
+              <label>
+                Current Password
+                <span className="required-asterisk"> *</span>
+              </label>
               <input
                 type="password"
                 value={passwordForm.current_password}
@@ -138,7 +147,10 @@ export default function Profile() {
               />
             </div>
             <div className="form-group">
-              <label>New Password *</label>
+              <label>
+                New Password
+                <span className="required-asterisk"> *</span>
+              </label>
               <input
                 type="password"
                 value={passwordForm.new_password}
@@ -148,7 +160,10 @@ export default function Profile() {
               />
             </div>
             <div className="form-group">
-              <label>Confirm New Password *</label>
+              <label>
+                Confirm New Password
+                <span className="required-asterisk"> *</span>
+              </label>
               <input
                 type="password"
                 value={passwordForm.confirm_password}

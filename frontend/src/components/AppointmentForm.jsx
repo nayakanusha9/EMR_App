@@ -1,21 +1,25 @@
 import { useEffect, useState } from 'react';
 import PhoneInput from './PhoneInput';
+import { RequiredAsterisk } from './FormLabel';
 import {
   emptyForm,
   patientToForm,
   buildPayload,
 } from '../utils/patientForm';
-import { PATIENT_TYPES, APPOINTMENT_STATUSES } from '../utils/constants';
+import { DEFAULT_COUNTRY_CODE, PATIENT_TYPES, APPOINTMENT_STATUSES } from '../utils/constants';
 
 function renderField(field, form, handleChange) {
   const { name, label, type, required, optional } = field;
 
-  if (type === 'country' || name === 'phone') return null;
+  if (type === 'country' || name === 'phone' || name === 'alternative_phone') return null;
 
   if (type === 'patient_type') {
     return (
       <div key={name} className="form-group">
-        <label>{label}</label>
+        <label>
+          {label}
+          <RequiredAsterisk required={required} optional={optional} />
+        </label>
         <select name={name} value={form[name] ?? ''} onChange={handleChange}>
           <option value="">Select</option>
           {PATIENT_TYPES.map((opt) => (
@@ -29,7 +33,10 @@ function renderField(field, form, handleChange) {
   if (type === 'appointment_status') {
     return (
       <div key={name} className="form-group">
-        <label>{label}</label>
+        <label>
+          {label}
+          <RequiredAsterisk required={required} optional={optional} />
+        </label>
         <select name={name} value={form[name] ?? ''} onChange={handleChange}>
           <option value="">Select</option>
           {APPOINTMENT_STATUSES.map((opt) => (
@@ -46,7 +53,10 @@ function renderField(field, form, handleChange) {
       className="form-group"
       style={type === 'textarea' ? { gridColumn: '1 / -1' } : undefined}
     >
-      <label>{label}{required && !optional ? ' *' : ''}</label>
+      <label>
+        {label}
+        <RequiredAsterisk required={required} optional={optional} />
+      </label>
       {type === 'textarea' ? (
         <textarea name={name} value={form[name] ?? ''} onChange={handleChange} required={required && !optional} />
       ) : (
@@ -76,6 +86,7 @@ export default function AppointmentForm({
 }) {
   const [form, setForm] = useState(() => ({
     ...emptyForm(formFields),
+    alternative_phone_country_code: DEFAULT_COUNTRY_CODE,
     ...(defaultDate ? { date: defaultDate } : {}),
     ...(patient ? patientToForm(patient) : {}),
   }));
@@ -83,6 +94,7 @@ export default function AppointmentForm({
   useEffect(() => {
     setForm({
       ...emptyForm(formFields),
+      alternative_phone_country_code: DEFAULT_COUNTRY_CODE,
       ...(defaultDate ? { date: defaultDate } : {}),
       ...(patient ? patientToForm(patient) : {}),
     });
@@ -98,6 +110,7 @@ export default function AppointmentForm({
   };
 
   const showPhone = formFields.some((f) => f.name === 'phone');
+  const showAlternativePhone = formFields.some((f) => f.name === 'alternative_phone');
 
   return (
     <>
@@ -113,6 +126,17 @@ export default function AppointmentForm({
                 phone={form.phone}
                 onCountryChange={(v) => setForm({ ...form, phone_country_code: v })}
                 onPhoneChange={(v) => setForm({ ...form, phone: v })}
+              />
+            </div>
+          )}
+          {showAlternativePhone && (
+            <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+              <label>Alternative Phone Number</label>
+              <PhoneInput
+                countryCode={form.alternative_phone_country_code}
+                phone={form.alternative_phone}
+                onCountryChange={(v) => setForm({ ...form, alternative_phone_country_code: v })}
+                onPhoneChange={(v) => setForm({ ...form, alternative_phone: v })}
               />
             </div>
           )}

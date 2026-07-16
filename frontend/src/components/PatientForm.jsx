@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import PhoneInput from './PhoneInput';
+import { RequiredAsterisk } from './FormLabel';
 import {
   emptyForm,
   patientToForm,
@@ -18,7 +19,10 @@ function renderField(field, form, handleChange) {
       className="form-group"
       style={type === 'textarea' ? { gridColumn: '1 / -1' } : undefined}
     >
-      <label>{label}{required && !optional ? ' *' : ''}</label>
+      <label>
+        {label}
+        <RequiredAsterisk required={required} optional={optional} />
+      </label>
       {type === 'textarea' ? (
         <textarea name={name} value={form[name] ?? ''} onChange={handleChange} required={required && !optional} />
       ) : (
