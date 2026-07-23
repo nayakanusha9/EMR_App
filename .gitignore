@@ -1,7 +1,45 @@
+# Environment & secrets
 .env
-uploads/
+.env.*
+!.env.example
+backend/.env
+frontend/.env
+frontend/.env.local
+frontend/.env.production
+frontend/.env.development
+
+# Python
 __pycache__/
-node_modules/
-dist/
+*.pyc
 .venv/
 venv/
+uploads/
+
+# Node
+node_modules/
+dist/
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Android build artifacts
+frontend/android/.gradle/
+frontend/android/app/build/
+frontend/android/build/
+frontend/android/local.properties
+*.keystore
+*.jks
+
+# Capacitor synced assets (generated)
+frontend/android/app/src/main/assets/public/
+
+# Keys & certificates
+*.pem
+*.key
+*.p12
+*.pfx
+credentials.json
+secrets.json

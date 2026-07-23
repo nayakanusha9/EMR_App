@@ -3,8 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from sqlalchemy import text
-
+from app.config import settings
 from app.database import Base, SessionLocal, engine
 from app.models import User
 from app.auth import get_password_hash, get_user_by_email
@@ -13,6 +12,7 @@ from app.migrate import run_migrations
 
 
 def seed_users():
+    """Create default dev accounts only when explicitly running in development."""
     db = SessionLocal()
     try:
         defaults = [
@@ -44,27 +44,27 @@ def seed_users():
         db.close()
 
 
-# def reset_schema():
-#     with engine.connect() as conn:
-#         conn.execute(text("DROP SCHEMA public CASCADE"))
-#         conn.execute(text("CREATE SCHEMA public"))
-#         conn.commit()
-#     Base.metadata.create_all(bind=engine)
-
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
     run_migrations(engine)
-    seed_users()
+
+    if settings.ENVIRONMENT == "development":
+        seed_users()
+
     yield
 
+
+is_production = settings.ENVIRONMENT == "production"
 
 app = FastAPI(
     title="EMR API",
     description="Electronic Medical Records Management System",
     version="1.0.0",
     lifespan=lifespan,
+    docs_url=None if is_production else "/docs",
+    redoc_url=None if is_production else "/redoc",
+    openapi_url=None if is_production else "/openapi.json",
 )
 
 app.add_middleware(
@@ -73,7 +73,6 @@ app.add_middleware(
         "http://localhost:5173",
         "http://localhost:3000",
         "https://emr-app-frontend.vercel.app",
-        # Capacitor Android/iOS WebView origins (default androidScheme: https)
         "https://localhost",
         "http://localhost",
         "capacitor://localhost",
@@ -94,9 +93,10 @@ app.include_router(dashboard.router, prefix="/api")
 def health_check():
     return {"status": "healthy"}
 
+
 @app.get("/")
 def root():
     return {
         "message": "AMAX EMR Backend Running",
-        "status": "OK"
+        "status": "OK",
     }
